@@ -15,19 +15,27 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, onOpenModal }: ProductCardProps) {
+  const hasImage = Boolean(product.image);
+
   return (
     <article
       onClick={onOpenModal}
       className="group cursor-pointer rounded-lg bg-white shadow-sm border border-slate-100 overflow-hidden hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 flex flex-col"
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100 flex-shrink-0">
-        <Image
-          src={product.image}
-          alt={product.title}
-          fill
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
-        />
+        {hasImage ? (
+          <Image
+            src={product.image}
+            alt={product.title}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-emerald-50 text-sm font-black text-[#00A965]">
+            0€
+          </div>
+        )}
         <span className={`absolute top-2 left-2 max-w-[calc(100%-1rem)] truncate rounded-full px-2.5 py-0.5 text-[11px] font-extrabold shadow-sm ${badgeStyles[product.badgeType]}`}>
           {product.badge}
         </span>

@@ -58,6 +58,7 @@ export default function GraciasPage() {
       isReal: true,
     };
   }, [intent]);
+  const selectedProductImage = selectedProduct.image || "";
 
   useEffect(() => {
     if (!RADAR_API_URL || !intent?.checkoutReference) return;
@@ -125,14 +126,20 @@ export default function GraciasPage() {
 
           <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white">
             <div className="relative aspect-[4/3] bg-slate-100">
-              <Image
-                src={selectedProduct.image}
-                alt={selectedProduct.title}
-                fill
-                sizes="(max-width: 640px) 100vw, 640px"
-                className="object-cover"
-                priority
-              />
+              {selectedProductImage ? (
+                <Image
+                  src={selectedProductImage}
+                  alt={selectedProduct.title}
+                  fill
+                  sizes="(max-width: 640px) 100vw, 640px"
+                  className="object-cover"
+                  priority
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-emerald-50 text-3xl font-black text-[#00A965]">
+                  0€
+                </div>
+              )}
               <span className="absolute right-3 top-3 rounded-full bg-[#07110C] px-3 py-1 text-xs font-black text-white">
                 0€
               </span>

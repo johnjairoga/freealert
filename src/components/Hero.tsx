@@ -1,8 +1,8 @@
 import Image from "next/image";
-import { productDataMeta, products } from "@/data/products";
+import { Product, productDataMeta, products } from "@/data/products";
 
 interface HeroProps {
-  onOpenModal: () => void;
+  onOpenModal: (product?: Product) => void;
 }
 
 export default function Hero({ onOpenModal }: HeroProps) {
@@ -70,16 +70,22 @@ export default function Hero({ onOpenModal }: HeroProps) {
                 style={{
                   transform: `rotate(${(i % 2 === 0 ? -1 : 1) * (1 + i % 2)}deg)`,
                 }}
-                onClick={onOpenModal}
+                onClick={() => onOpenModal(product)}
               >
-                <Image
-                  src={product.image}
-                  alt={product.title}
-                  fill
-                  sizes="(min-width: 1024px) 180px, 0px"
-                  priority={i < 3}
-                  className="object-cover group-hover:scale-110 transition-transform duration-300"
-                />
+                {product.image ? (
+                  <Image
+                    src={product.image}
+                    alt={product.title}
+                    fill
+                    sizes="(min-width: 1024px) 180px, 0px"
+                    priority={i < 3}
+                    className="object-cover group-hover:scale-110 transition-transform duration-300"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-emerald-50 text-sm font-black text-[#00A965]">
+                    0€
+                  </div>
+                )}
               </div>
             ))}
           </div>

@@ -52,6 +52,7 @@ export default function Modal({ isOpen, onClose, product }: ModalProps) {
   const selectedAnswer = currentStep ? answers[currentStep.id] : "";
   const canContinue = !currentStep || Boolean(selectedAnswer);
   const previewProducts = products.slice(0, 4);
+  const productImage = product?.image || "";
   const normalizedEmail = email.trim().toLowerCase();
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail);
   const showEmailError = emailTouched && !isEmailValid;
@@ -158,14 +159,20 @@ export default function Modal({ isOpen, onClose, product }: ModalProps) {
           <div className="pt-8">
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="relative h-48 w-full bg-slate-100">
-                <Image
-                  src={product.image}
-                  alt={product.title}
-                  fill
-                  sizes="(max-width: 640px) 100vw, 448px"
-                  className="object-cover"
-                  priority
-                />
+                {productImage ? (
+                  <Image
+                    src={productImage}
+                    alt={product.title}
+                    fill
+                    sizes="(max-width: 640px) 100vw, 448px"
+                    className="object-cover"
+                    priority
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-emerald-50 text-3xl font-black text-[#00A965]">
+                    0€
+                  </div>
+                )}
                 <span className="absolute left-3 top-3 rounded-full bg-[#00C978] px-3 py-1 text-xs font-black text-[#07110C] shadow-sm">
                   Disponible ahora
                 </span>
@@ -280,14 +287,20 @@ export default function Modal({ isOpen, onClose, product }: ModalProps) {
                 <div className="relative mx-auto h-52 max-w-[310px]">
                   <div className="absolute left-2 top-3 z-10 w-36 rotate-[-5deg] overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-slate-900/5 animate-float-slow">
                     <div className="relative h-24 w-full">
-                      <Image
-                        src={previewProducts[0].image}
-                        alt=""
-                        fill
-                        sizes="160px"
-                        className="object-cover"
-                        priority
-                      />
+                      {previewProducts[0]?.image ? (
+                        <Image
+                          src={previewProducts[0].image}
+                          alt=""
+                          fill
+                          sizes="160px"
+                          className="object-cover"
+                          priority
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-emerald-50 text-sm font-black text-[#00A965]">
+                          0€
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center justify-between px-3 py-2">
                       <span className="max-w-20 truncate text-xs font-black text-slate-950">
@@ -301,14 +314,20 @@ export default function Modal({ isOpen, onClose, product }: ModalProps) {
 
                   <div className="absolute right-0 top-10 z-20 w-40 rotate-[4deg] overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/5 animate-float-soft">
                     <div className="relative h-28 w-full">
-                      <Image
-                        src={previewProducts[1].image}
-                        alt=""
-                        fill
-                        sizes="170px"
-                        className="object-cover"
-                        priority
-                      />
+                      {previewProducts[1]?.image ? (
+                        <Image
+                          src={previewProducts[1].image}
+                          alt=""
+                          fill
+                          sizes="170px"
+                          className="object-cover"
+                          priority
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-emerald-50 text-sm font-black text-[#00A965]">
+                          0€
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center justify-between px-3 py-2">
                       <span className="max-w-20 truncate text-xs font-black text-slate-950">
@@ -325,13 +344,19 @@ export default function Modal({ isOpen, onClose, product }: ModalProps) {
                       0€
                     </div>
                     <div className="relative h-28 w-full">
-                      <Image
-                        src={previewProducts[3].image}
-                        alt=""
-                        fill
-                        sizes="180px"
-                        className="object-cover"
-                      />
+                      {previewProducts[3]?.image ? (
+                        <Image
+                          src={previewProducts[3].image}
+                          alt=""
+                          fill
+                          sizes="180px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-emerald-50 text-sm font-black text-[#00A965]">
+                          0€
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center justify-between px-3 py-2">
                       <span className="max-w-24 truncate text-xs font-black text-slate-950">

@@ -23,7 +23,7 @@ export default function Navbar({ onOpenModal }: NavbarProps) {
             </span>
           </div>
           <button
-            onClick={onOpenModal}
+            onClick={() => onOpenModal()}
             className="rounded-full bg-[#00C978] px-4 py-2 text-sm font-bold text-[#07110C] hover:bg-[#00B86F] transition-colors shadow-md"
           >
             Activar alertas
