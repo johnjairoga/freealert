@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { products } from "@/data/products";
+import { Product, products } from "@/data/products";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
+  product?: Product | null;
 }
 
 const onboardingSteps = [
@@ -37,7 +38,7 @@ const benefits = [
   "Cancela cuando quieras, sin permanencia",
 ];
 
-export default function Modal({ isOpen, onClose }: ModalProps) {
+export default function Modal({ isOpen, onClose, product }: ModalProps) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const questionStep = step > 0 && step <= onboardingSteps.length;
@@ -107,7 +108,88 @@ export default function Modal({ isOpen, onClose }: ModalProps) {
           ✕
         </button>
 
-        {step === 0 && (
+        {product && (
+          <div className="pt-8">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="relative h-48 w-full bg-slate-100">
+                <Image
+                  src={product.image}
+                  alt={product.title}
+                  fill
+                  sizes="(max-width: 640px) 100vw, 448px"
+                  className="object-cover"
+                  priority
+                />
+                <span className="absolute left-3 top-3 rounded-full bg-[#00C978] px-3 py-1 text-xs font-black text-[#07110C] shadow-sm">
+                  Disponible ahora
+                </span>
+                <span className="absolute right-3 top-3 rounded-full bg-[#07110C] px-3 py-1 text-xs font-black text-white shadow-sm">
+                  0€
+                </span>
+              </div>
+              <div className="p-4">
+                <h2 className="pr-7 text-2xl font-black leading-tight text-slate-950">
+                  {product.title}
+                </h2>
+                <div className="mt-2 flex items-center justify-between text-sm font-semibold text-slate-500">
+                  <span>📍 {product.location}</span>
+                  <span>{product.timeAgo}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+              <strong>Este hallazgo puede desaparecer pronto.</strong> Desbloquea contacto y activa alertas para productos similares.
+            </div>
+
+            <h3 className="mt-5 text-xl font-extrabold text-slate-950">
+              Obtén este producto y los próximos parecidos
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              El acceso incluye la información necesaria para reclamar este hallazgo y alertas instantáneas cuando aparezcan oportunidades similares.
+            </p>
+
+            <div className="mt-5 grid gap-2.5">
+              {[
+                "Contacto o enlace de la publicación",
+                "Zona y detalles para coordinar recogida",
+                "Alertas de productos similares en Madrid",
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="flex items-start gap-2.5 rounded-xl bg-slate-50 p-3 text-sm font-semibold text-slate-700"
+                >
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#00C978] text-xs font-black text-[#07110C]">
+                    ✓
+                  </span>
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 rounded-xl bg-slate-50 p-4 text-center">
+              <div className="text-3xl font-extrabold text-slate-900">
+                4,99 <span className="text-lg font-semibold text-slate-500">€/mes</span>
+              </div>
+              <p className="mt-1 text-xs text-slate-500">Este producto + alertas similares · Cancela cuando quieras</p>
+            </div>
+
+            <a
+              href="https://buy.stripe.com/bJeaEZ0KcfCx6ju25tbfO0g"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 block text-center rounded-xl bg-[#00C978] py-3.5 text-sm font-extrabold text-[#07110C] hover:bg-[#00B86F] transition-colors shadow-lg"
+            >
+              Desbloquear este producto →
+            </a>
+
+            <p className="mt-3 text-center text-xs text-slate-500">
+              Pago seguro con Stripe · Sin permanencia
+            </p>
+          </div>
+        )}
+
+        {!product && step === 0 && (
           <>
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#DFFFEF] via-white to-emerald-50 px-4 pb-5 pt-6">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_18%,rgba(0,201,120,0.24),transparent_28%),radial-gradient(circle_at_82%_70%,rgba(0,224,138,0.22),transparent_28%)]" />
@@ -221,7 +303,7 @@ export default function Modal({ isOpen, onClose }: ModalProps) {
           </>
         )}
 
-        {questionStep && currentStep && (
+        {!product && questionStep && currentStep && (
           <>
             <div className="mb-5 flex items-center gap-2 pr-8">
               {onboardingSteps.map((item, index) => (
@@ -293,7 +375,7 @@ export default function Modal({ isOpen, onClose }: ModalProps) {
           </>
         )}
 
-        {step === resultStep && (
+        {!product && step === resultStep && (
           <>
             <div className="mb-4 rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-900">
               <strong>Tu radar está listo.</strong> Encontramos oportunidades que encajan contigo.
@@ -343,7 +425,7 @@ export default function Modal({ isOpen, onClose }: ModalProps) {
           </>
         )}
 
-        {step === paywallStep && (
+        {!product && step === paywallStep && (
           <div className="pt-8">
             <div className="mb-4 rounded-xl bg-amber-50 border border-amber-200 p-3 pr-8 text-sm text-amber-800">
               <strong>Los artículos se agotan rápido.</strong> Activa alertas instantáneas para llegar antes.

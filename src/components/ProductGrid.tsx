@@ -1,10 +1,11 @@
 import { products } from "@/data/products";
 import ProductCard from "./ProductCard";
+import { Product } from "@/data/products";
 
 const VISIBLE_COUNT = 8;
 
 interface ProductGridProps {
-  onOpenModal: () => void;
+  onOpenModal: (product?: Product) => void;
 }
 
 export default function ProductGrid({ onOpenModal }: ProductGridProps) {
@@ -31,7 +32,7 @@ export default function ProductGrid({ onOpenModal }: ProductGridProps) {
               <ProductCard
                 key={product.id}
                 product={product}
-                onOpenModal={onOpenModal}
+                onOpenModal={() => onOpenModal(product)}
               />
             ))}
           </div>
@@ -44,7 +45,7 @@ export default function ProductGrid({ onOpenModal }: ProductGridProps) {
               <p className="text-sm text-red-700 mt-2 font-semibold">Nuevos cada hora • Se llevan en minutos</p>
               <p className="text-xs text-red-600 mt-3">Acceso a 350+ oportunidades gratis cada mes</p>
               <button
-                onClick={onOpenModal}
+                onClick={() => onOpenModal()}
                 className="mt-4 rounded-full bg-red-600 px-8 py-3 text-base font-extrabold text-white hover:bg-red-700 transition-colors shadow-lg hover:-translate-y-0.5"
               >
                 Desbloquear alertas →
