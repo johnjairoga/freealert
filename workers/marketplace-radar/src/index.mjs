@@ -5,6 +5,9 @@ const MARKETPLACE_URLS = [
 
 const CACHE_KEY = "marketplace:madrid:latest";
 const LAST_RUN_KEY = "apify:last-run-id";
+const LAST_STATUS_KEY = "radar:last-status";
+const LAST_ERROR_KEY = "radar:last-error";
+const LAST_PAYMENT_KEY = "stripe:last-payment";
 const DEFAULT_ACTOR_ID = "apify/facebook-marketplace-scraper";
 const STRIPE_SIGNATURE_TOLERANCE_SECONDS = 300;
 
@@ -145,6 +148,47 @@ function corsResponse() {
       "Access-Control-Max-Age": "86400",
     },
   });
+}
+
+function errorPayload(scope, error, extra = {}) {
+  return {
+    ok: false,
+    scope,
+    message: error instanceof Error ? error.message : String(error),
+    stack: error instanceof Error ? error.stack : "",
+    extra,
+    at: new Date().toISOString(),
+  };
+}
+
+async function sendAlert(env, payload) {
+  if (!env.ALERT_WEBHOOK_URL) return;
+
+  try {
+    await fetch(env.ALERT_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: `[Pillalo] ${payload.scope}: ${payload.message || "alert"}`,
+        ...payload,
+      }),
+    });
+  } catch {
+    // Avoid alert delivery failures breaking the Worker path that is already handling a failure.
+  }
+}
+
+async function recordError(env, scope, error, extra = {}) {
+  const payload = errorPayload(scope, error, extra);
+  await env.PRODUCT_CACHE.put(LAST_ERROR_KEY, JSON.stringify(payload));
+  await sendAlert(env, payload);
+  return payload;
+}
+
+async function recordStatus(env, status) {
+  const payload = { ok: true, at: new Date().toISOString(), ...status };
+  await env.PRODUCT_CACHE.put(LAST_STATUS_KEY, JSON.stringify(payload));
+  return payload;
 }
 
 function normalizeText(value = "") {
@@ -369,6 +413,13 @@ async function ingestFinishedRun(env) {
   await env.PRODUCT_CACHE.put(CACHE_KEY, JSON.stringify(payload));
   await env.PRODUCT_CACHE.delete(LAST_RUN_KEY);
 
+  if (payload.count === 0) {
+    await recordError(env, "marketplace-empty-feed", new Error("Marketplace feed produced 0 approved products"), {
+      rejected: payload.rejected,
+      datasetId: run.defaultDatasetId,
+    });
+  }
+
   return { status: "ingested", count: payload.count, rejected: payload.rejected };
 }
 
@@ -383,7 +434,9 @@ async function refresh(env) {
   }
 
   const nextRun = await startApifyRun(env);
-  return { previousRun, nextRun: { id: nextRun.id, status: nextRun.status } };
+  const result = { previousRun, nextRun: { id: nextRun.id, status: nextRun.status } };
+  await recordStatus(env, { scope: "marketplace-refresh", ...result });
+  return result;
 }
 
 function normalizeEmail(email = "") {
@@ -485,6 +538,7 @@ async function storeEntitlement(env, event) {
   const writes = [env.PRODUCT_CACHE.put(eventKey, value)];
   if (entitlement.email) writes.push(env.PRODUCT_CACHE.put(`entitlement:email:${entitlement.email}`, value));
   if (entitlement.reference) writes.push(env.PRODUCT_CACHE.put(`entitlement:ref:${entitlement.reference}`, value));
+  writes.push(env.PRODUCT_CACHE.put(LAST_PAYMENT_KEY, value));
 
   await Promise.all(writes);
   return { stored: true, email: entitlement.email, reference: entitlement.reference };
@@ -515,9 +569,36 @@ async function getEntitlement(request, env) {
   return noStoreJson({ active: true, entitlement });
 }
 
+async function getStatus(env) {
+  const [status, error, payment, products] = await Promise.all([
+    env.PRODUCT_CACHE.get(LAST_STATUS_KEY, "json"),
+    env.PRODUCT_CACHE.get(LAST_ERROR_KEY, "json"),
+    env.PRODUCT_CACHE.get(LAST_PAYMENT_KEY, "json"),
+    env.PRODUCT_CACHE.get(CACHE_KEY, "json"),
+  ]);
+
+  return noStoreJson({
+    ok: !error,
+    status,
+    lastError: error,
+    lastPayment: payment
+      ? {
+          email: payment.email,
+          reference: payment.reference,
+          paymentStatus: payment.paymentStatus,
+          createdAt: payment.createdAt,
+        }
+      : null,
+    productCount: products?.count || 0,
+    productGeneratedAt: products?.generatedAt || null,
+  });
+}
+
 const worker = {
   async scheduled(_event, env, ctx) {
-    ctx.waitUntil(refresh(env));
+    ctx.waitUntil(
+      refresh(env).catch((error) => recordError(env, "marketplace-cron", error)),
+    );
   },
 
   async fetch(request, env) {
@@ -531,7 +612,12 @@ const worker = {
 
     if (url.pathname === "/api/refresh") {
       if (url.searchParams.get("secret") !== env.WORKER_SECRET) return json({ error: "Unauthorized" }, 401);
-      return json(await refresh(env));
+      try {
+        return json(await refresh(env));
+      } catch (error) {
+        await recordError(env, "marketplace-manual-refresh", error);
+        return noStoreJson({ error: "Refresh failed" }, 500);
+      }
     }
 
     if (url.pathname === "/api/products") {
@@ -548,11 +634,21 @@ const worker = {
 
     if (url.pathname === "/api/stripe/webhook") {
       if (request.method !== "POST") return noStoreJson({ error: "Method not allowed" }, 405);
-      return handleStripeWebhook(request, env);
+      try {
+        return await handleStripeWebhook(request, env);
+      } catch (error) {
+        await recordError(env, "stripe-webhook", error);
+        return noStoreJson({ error: "Webhook failed" }, 500);
+      }
     }
 
     if (url.pathname === "/api/entitlement") {
       return getEntitlement(request, env);
+    }
+
+    if (url.pathname === "/api/status") {
+      if (url.searchParams.get("secret") !== env.WORKER_SECRET) return noStoreJson({ error: "Unauthorized" }, 401);
+      return getStatus(env);
     }
 
     return json({ error: "Not found" }, 404);

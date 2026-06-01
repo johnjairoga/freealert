@@ -103,7 +103,9 @@ The production radar lives in `workers/marketplace-radar`. It:
 - ingests the previous finished run,
 - filters real-free products,
 - stores the latest approved feed in Workers KV,
-- exposes `GET /api/products`.
+- exposes `GET /api/products`,
+- stores last status/error/payment in KV,
+- can send failure alerts to a generic webhook.
 
 Required secrets/config:
 
@@ -111,6 +113,7 @@ Required secrets/config:
 wrangler kv namespace create PRODUCT_CACHE
 wrangler secret put APIFY_TOKEN --config workers/marketplace-radar/wrangler.toml
 wrangler secret put WORKER_SECRET --config workers/marketplace-radar/wrangler.toml
+wrangler secret put ALERT_WEBHOOK_URL --config workers/marketplace-radar/wrangler.toml
 ```
 
 Optional:
@@ -122,6 +125,21 @@ wrangler secret put APIFY_INPUT --config workers/marketplace-radar/wrangler.toml
 ```
 
 When no `APIFY_TASK_ID` is set, the Worker runs `apify/facebook-marketplace-scraper` directly.
+
+Status endpoint:
+
+```txt
+GET https://<worker-domain>/api/status?secret=<WORKER_SECRET>
+```
+
+Alerts fire when:
+
+- the cron refresh throws,
+- manual refresh fails,
+- Stripe webhook processing fails,
+- Marketplace returns 0 approved products.
+
+`ALERT_WEBHOOK_URL` can point to Slack, Discord, Make, Zapier, or any endpoint that accepts JSON.
 
 Local Worker:
 
