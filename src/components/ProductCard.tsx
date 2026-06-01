@@ -49,7 +49,7 @@ export default function ProductCard({ product, onOpenModal }: ProductCardProps) 
           }}
           className="mt-2 w-full rounded-lg bg-[#00C978] py-2.5 text-xs font-extrabold text-[#07110C] hover:bg-[#00B86F] transition-colors shadow-sm"
         >
-          Obtener este producto →
+          Ver cómo reclamarlo →
         </button>
       </div>
     </article>

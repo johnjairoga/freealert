@@ -1,4 +1,7 @@
+import scrapedProducts from "./scraped-products.json";
+
 export type BadgeType = 'new' | 'hot' | 'urgent' | 'available' | 'time';
+export type ProductQuality = "high" | "medium" | "low";
 
 export interface Product {
   id: number;
@@ -8,9 +11,15 @@ export interface Product {
   timeAgo: string;
   badge: string;
   badgeType: BadgeType;
+  source?: string;
+  sourceUrl?: string;
+  description?: string;
+  detectedAt?: string;
+  quality?: ProductQuality;
+  isReal?: boolean;
 }
 
-export const products: Product[] = [
+const fallbackProducts: Product[] = [
   {
     id: 1,
     title: "Bici eléctrica Dakota",
@@ -228,3 +237,14 @@ export const products: Product[] = [
     badgeType: "hot",
   },
 ];
+
+const realProducts = scrapedProducts.products as Product[];
+
+export const products: Product[] = realProducts.length > 0 ? realProducts : fallbackProducts;
+export const productDataMeta = {
+  source: scrapedProducts.source,
+  sourceUrl: scrapedProducts.sourceUrl,
+  generatedAt: scrapedProducts.generatedAt,
+  count: scrapedProducts.count,
+  isLive: realProducts.length > 0,
+};

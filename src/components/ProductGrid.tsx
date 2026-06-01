@@ -17,7 +17,7 @@ export default function ProductGrid({ onOpenModal }: ProductGridProps) {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-xl font-bold text-slate-900">
-            Disponibles ahora en Madrid
+            Detectados ahora en Madrid
           </h2>
           <span className="text-xs text-slate-500">
             {visibleProducts.length} visible • +{hiddenCount} bloqueados

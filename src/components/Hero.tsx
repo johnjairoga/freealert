@@ -1,11 +1,13 @@
 import Image from "next/image";
-import { products } from "@/data/products";
+import { productDataMeta, products } from "@/data/products";
 
 interface HeroProps {
   onOpenModal: () => void;
 }
 
 export default function Hero({ onOpenModal }: HeroProps) {
+  const freshCount = products.filter((product) => !product.timeAgo.includes("día")).length;
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-white via-emerald-50 to-[#D9FFE8] py-10 sm:py-14">
       {/* Background decoration blobs */}
@@ -30,7 +32,7 @@ export default function Hero({ onOpenModal }: HeroProps) {
             </h1>
 
             <p className="mt-3 text-base text-slate-600 sm:text-lg">
-              Armarios, sofás, lavadoras, bicicletas. Personas de tu ciudad regalan artículos en perfecto estado. Ahorra miles de euros.
+              Armarios, sofás, lavadoras, bicicletas. Detectamos publicaciones reales para que llegues antes.
             </p>
 
             <div className="mt-5 flex flex-col sm:flex-row gap-3">
@@ -50,9 +52,9 @@ export default function Hero({ onOpenModal }: HeroProps) {
 
             {/* Stats bar */}
             <div className="mt-6 flex flex-wrap gap-4 text-xs text-slate-600">
-              <span>🔥 <strong className="text-slate-900">127</strong> oportunidades</span>
+              <span>🔥 <strong className="text-slate-900">{productDataMeta.count || products.length}</strong> oportunidades</span>
               <span className="text-slate-300">|</span>
-              <span>⚡ <strong className="text-slate-900">38</strong> nuevas hoy</span>
+              <span>⚡ <strong className="text-slate-900">{freshCount}</strong> recientes</span>
               <span className="text-slate-300">|</span>
               <span>📍 <strong className="text-slate-900">Madrid</strong></span>
             </div>

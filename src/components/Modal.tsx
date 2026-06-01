@@ -139,20 +139,20 @@ export default function Modal({ isOpen, onClose, product }: ModalProps) {
             </div>
 
             <div className="mt-5 rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
-              <strong>Este hallazgo puede desaparecer pronto.</strong> Desbloquea contacto y activa alertas para productos similares.
+              <strong>Este hallazgo puede desaparecer pronto.</strong> Desbloquea los datos para reclamarlo y activa alertas para productos similares.
             </div>
 
             <h3 className="mt-5 text-xl font-extrabold text-slate-950">
-              Obtén este producto y los próximos parecidos
+              Reclama este producto y los próximos parecidos
             </h3>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              El acceso incluye la información necesaria para reclamar este hallazgo y alertas instantáneas cuando aparezcan oportunidades similares.
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              El acceso incluye el enlace original y los detalles para intentar reclamar este hallazgo, además de alertas instantáneas cuando aparezcan oportunidades similares.
             </p>
 
             <div className="mt-5 grid gap-2.5">
               {[
-                "Contacto o enlace de la publicación",
-                "Zona y detalles para coordinar recogida",
+                "Enlace real de la publicación",
+                "Zona y detalles publicados para coordinar recogida",
                 "Alertas de productos similares en Madrid",
               ].map((item) => (
                 <div
@@ -180,12 +180,17 @@ export default function Modal({ isOpen, onClose, product }: ModalProps) {
               rel="noopener noreferrer"
               className="mt-4 block text-center rounded-xl bg-[#00C978] py-3.5 text-sm font-extrabold text-[#07110C] hover:bg-[#00B86F] transition-colors shadow-lg"
             >
-              Desbloquear este producto →
+              Obtener datos para reclamarlo →
             </a>
 
             <p className="mt-3 text-center text-xs text-slate-500">
               Pago seguro con Stripe · Sin permanencia
             </p>
+            {product.sourceUrl && (
+              <p className="mt-2 text-center text-[11px] text-slate-400">
+                Fuente real detectada en {product.source}
+              </p>
+            )}
           </div>
         )}
 
