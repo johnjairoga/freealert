@@ -24,9 +24,9 @@ export default function HowItWorks() {
               {index < steps.length - 1 && (
                 <div className="absolute top-8 left-1/2 hidden lg:block h-px w-full bg-slate-200 transform -translate-x-1/2" />
               )}
-              <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#1E3A5F] text-2xl shadow-lg">
+              <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#00C978] text-2xl shadow-lg">
                 {step.icon}
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-[#1E3A5F] border border-[#1E3A5F]">
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-[#07110C] border border-[#00C978]">
                   {step.number.slice(-1)}
                 </span>
               </div>

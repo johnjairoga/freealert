@@ -47,7 +47,7 @@ export default function ProductGrid({ onOpenModal }: ProductGridProps) {
                 onClick={onOpenModal}
                 className="mt-4 rounded-full bg-red-600 px-8 py-3 text-base font-extrabold text-white hover:bg-red-700 transition-colors shadow-lg hover:-translate-y-0.5"
               >
-                Llamar ahora →
+                Desbloquear alertas →
               </button>
             </div>
           )}

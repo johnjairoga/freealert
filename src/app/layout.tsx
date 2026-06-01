@@ -9,30 +9,40 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "FreeFy - Encuentra objetos gratis en Madrid",
-  description: "Descubre muebles, electrodomésticos, bicicletas y más que personas regalan cerca de ti en Madrid. Sé el primero en saberlo.",
+  metadataBase: new URL("https://pillalo.app"),
+  title: "Píllalo - Cosas gratis cerca de ti",
+  description: "Descubre muebles, electrodomésticos, bicicletas y más que personas regalan cerca de ti en Madrid. Píllalo antes de que desaparezca.",
   keywords: ["gratis", "Madrid", "muebles", "objetos gratis", "donaciones"],
-  authors: [{ name: "FreeFy" }],
+  authors: [{ name: "Pillalo" }],
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/icon.png",
+  },
   openGraph: {
     type: "website",
     locale: "es_ES",
-    url: "https://freefy.es",
-    siteName: "FreeFy",
-    title: "FreeFy - Encuentra objetos gratis en Madrid",
+    url: "/",
+    siteName: "Píllalo",
+    title: "Píllalo - Cosas gratis cerca de ti",
     description: "Descubre muebles, electrodomésticos, bicicletas y más que personas regalan cerca de ti en Madrid.",
     images: [
       {
-        url: "https://freefy.es/og-image.jpg",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "FreeFy - Objetos gratis en Madrid",
+        alt: "Píllalo - Objetos gratis en Madrid",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "FreeFy - Encuentra objetos gratis en Madrid",
+    title: "Píllalo - Cosas gratis cerca de ti",
     description: "Descubre objetos gratis cerca de ti en Madrid.",
+    images: ["/twitter-image"],
   },
   robots: {
     index: true,

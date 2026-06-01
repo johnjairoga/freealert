@@ -5,7 +5,7 @@ const badgeStyles: Record<Product['badgeType'], string> = {
   new: "bg-green-100 text-green-700",
   hot: "bg-orange-100 text-orange-700",
   urgent: "bg-red-100 text-red-700",
-  available: "bg-blue-100 text-blue-700",
+  available: "bg-emerald-100 text-emerald-700",
   time: "bg-cyan-100 text-cyan-700",
 };
 
@@ -44,9 +44,9 @@ export default function ProductCard({ product, onOpenModal }: ProductCardProps) 
         </div>
         <button
           onClick={onOpenModal}
-          className="mt-2 w-full rounded-lg bg-[#1E3A5F] py-2.5 text-xs font-bold text-white hover:bg-[#152D4A] transition-colors shadow-sm"
+          className="mt-2 w-full rounded-lg bg-[#00C978] py-2.5 text-xs font-extrabold text-[#07110C] hover:bg-[#00B86F] transition-colors shadow-sm"
         >
-          Llamar →
+          Ver alerta →
         </button>
       </div>
     </article>

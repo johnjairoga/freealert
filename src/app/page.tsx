@@ -11,8 +11,12 @@ import Footer from "@/components/Footer";
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalSession, setModalSession] = useState(0);
 
-  const openModal = () => setIsModalOpen(true);
+  const openModal = () => {
+    setModalSession((current) => current + 1);
+    setIsModalOpen(true);
+  };
   const closeModal = () => setIsModalOpen(false);
 
   return (
@@ -25,7 +29,7 @@ export default function Home() {
         <FAQ />
       </main>
       <Footer />
-      <Modal isOpen={isModalOpen} onClose={closeModal} />
+      <Modal key={modalSession} isOpen={isModalOpen} onClose={closeModal} />
     </>
   );
 }

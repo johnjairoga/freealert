@@ -1,51 +1,8 @@
-<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background -->
-  <rect width="512" height="512" fill="#FFFFFF"/>
-
-  <!-- Gradient definition -->
-  <defs>
-    <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#1E3A5F;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#10B981;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-
-  <!-- Gift box icon (representing free items) -->
-  <g transform="translate(100, 100)">
-    <!-- Box -->
-    <rect x="20" y="60" width="120" height="100" fill="none" stroke="url(#textGradient)" stroke-width="4" rx="8"/>
-
-    <!-- Lid -->
-    <path d="M 30 60 L 80 20 L 130 60" fill="none" stroke="url(#textGradient)" stroke-width="4" stroke-linejoin="round"/>
-    <line x1="80" y1="20" x2="80" y2="60" stroke="url(#textGradient)" stroke-width="4"/>
-
-    <!-- Ribbon -->
-    <circle cx="80" cy="60" r="8" fill="url(#textGradient)"/>
-  </g>
-
-  <!-- Text "FreeFy" -->
-  <text
-    x="256"
-    y="320"
-    font-family="Inter, system-ui, sans-serif"
-    font-size="84"
-    font-weight="800"
-    fill="url(#textGradient)"
-    text-anchor="middle"
-    letter-spacing="-2"
-  >
-    FreeFy
-  </text>
-
-  <!-- Tagline -->
-  <text
-    x="256"
-    y="370"
-    font-family="Inter, system-ui, sans-serif"
-    font-size="20"
-    fill="#64748B"
-    text-anchor="middle"
-  >
-    Objetos gratis en Madrid
-  </text>
+<svg width="512" height="160" viewBox="0 0 512 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="160" fill="white"/>
+  <path d="M79 38H35C24.5 38 16 46.5 16 57v46c0 10.5 8.5 19 19 19h78c10.5 0 19-8.5 19-19V75L79 38Z" fill="#FFFFFF" stroke="#07110C" stroke-width="9" stroke-linejoin="round"/>
+  <circle cx="82" cy="61" r="7" fill="#07110C"/>
+  <text x="45" y="96" font-family="Inter, Arial, sans-serif" font-size="40" font-weight="900" fill="#07110C">0€</text>
+  <text x="158" y="98" font-family="Inter, Arial, sans-serif" font-size="64" font-weight="900" fill="#07110C">Píllalo</text>
+  <rect x="20" y="128" width="326" height="10" rx="5" fill="#00C978"/>
 </svg>

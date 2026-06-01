@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { products } from "@/data/products";
 
 interface HeroProps {
@@ -6,7 +7,7 @@ interface HeroProps {
 
 export default function Hero({ onOpenModal }: HeroProps) {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-white to-emerald-50 py-10 sm:py-14">
+    <section className="relative overflow-hidden bg-gradient-to-br from-white via-emerald-50 to-[#D9FFE8] py-10 sm:py-14">
       {/* Background decoration blobs */}
       <div className="absolute -top-32 -right-32 h-64 w-64 rounded-full bg-blue-100 opacity-30 blur-3xl" />
       <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-emerald-100 opacity-30 blur-3xl" />
@@ -16,14 +17,14 @@ export default function Hero({ onOpenModal }: HeroProps) {
           {/* Left: Text content */}
           <div>
             {/* Live badge */}
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-blue-100 px-4 py-1.5 text-sm font-medium text-[#1E3A5F]">
-              <span className="h-2 w-2 rounded-full bg-[#10B981] animate-pulse" />
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-4 py-1.5 text-sm font-medium text-[#07110C]">
+              <span className="h-2 w-2 rounded-full bg-[#00C978] animate-pulse" />
               En directo · Madrid
             </div>
 
             <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
               Consigue muebles y electrodomésticos{" "}
-              <span className="bg-gradient-to-r from-[#1E3A5F] to-[#10B981] bg-clip-text text-transparent">
+              <span className="text-[#00A965]">
                 gratis en España
               </span>
             </h1>
@@ -35,7 +36,7 @@ export default function Hero({ onOpenModal }: HeroProps) {
             <div className="mt-5 flex flex-col sm:flex-row gap-3">
               <a
                 href="#catalogo"
-                className="rounded-full bg-[#1E3A5F] px-8 py-3.5 text-base font-semibold text-white hover:bg-[#152D4A] transition-all shadow-lg hover:-translate-y-0.5"
+                className="rounded-full bg-[#00C978] px-8 py-3.5 text-base font-extrabold text-[#07110C] hover:bg-[#00B86F] transition-all shadow-lg hover:-translate-y-0.5"
               >
                 Ver oportunidades disponibles →
               </a>
@@ -63,16 +64,19 @@ export default function Hero({ onOpenModal }: HeroProps) {
             {products.slice(0, 9).map((product, i) => (
               <div
                 key={product.id}
-                className="rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow group cursor-pointer"
+                className="relative h-32 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow group cursor-pointer"
                 style={{
                   transform: `rotate(${(i % 2 === 0 ? -1 : 1) * (1 + i % 2)}deg)`,
                 }}
                 onClick={onOpenModal}
               >
-                <img
+                <Image
                   src={product.image}
                   alt={product.title}
-                  className="w-full h-32 object-cover group-hover:scale-110 transition-transform duration-300"
+                  fill
+                  sizes="(min-width: 1024px) 180px, 0px"
+                  priority={i < 3}
+                  className="object-cover group-hover:scale-110 transition-transform duration-300"
                 />
               </div>
             ))}

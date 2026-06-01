@@ -43,7 +43,7 @@ export default function FAQ() {
                 aria-expanded={openIndex === index}
               >
                 {faq.q}
-                <span className={`ml-4 shrink-0 text-[#1E3A5F] transition-transform duration-200 ${openIndex === index ? "rotate-180" : ""}`}>
+                <span className={`ml-4 shrink-0 text-[#00A965] transition-transform duration-200 ${openIndex === index ? "rotate-180" : ""}`}>
                   ▼
                 </span>
               </button>
