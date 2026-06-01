@@ -72,7 +72,27 @@ Before sending the user to Stripe, the app asks for an email and stores the sele
 
 The `/gracias` page uses the local intent to show the product, the original listing URL, the email associated with the access, and the next action to claim it.
 
-This is the minimum launch flow. A hardened version should add Stripe webhooks, customer identity, and server-side entitlement checks.
+The Worker also exposes a Stripe webhook endpoint:
+
+```txt
+https://<worker-domain>/api/stripe/webhook
+```
+
+Configure this endpoint in Stripe for the `checkout.session.completed` event. The Worker verifies the Stripe signature and stores the paid entitlement in Workers KV by email and `client_reference_id`.
+
+Required Worker secret:
+
+```bash
+wrangler secret put STRIPE_WEBHOOK_SECRET --config workers/marketplace-radar/wrangler.toml
+```
+
+Optional app env for `/gracias` payment confirmation:
+
+```bash
+NEXT_PUBLIC_PILLALO_RADAR_API_URL=https://<worker-domain>
+```
+
+This avoids adding Supabase or another database for launch. A later hardened version can add customer login and email retention.
 
 ## Cloudflare Worker radar
 

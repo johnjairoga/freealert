@@ -6,6 +6,7 @@ const MARKETPLACE_URLS = [
 const CACHE_KEY = "marketplace:madrid:latest";
 const LAST_RUN_KEY = "apify:last-run-id";
 const DEFAULT_ACTOR_ID = "apify/facebook-marketplace-scraper";
+const STRIPE_SIGNATURE_TOLERANCE_SECONDS = 300;
 
 const paidSignals = [
   /\benv[ií]o\s+gratis\b/i,
@@ -119,7 +120,29 @@ function json(data, status = 200) {
     status,
     headers: {
       "Access-Control-Allow-Origin": "*",
-      "Cache-Control": "public, max-age=60",
+      "Cache-Control": status >= 400 ? "no-store" : "public, max-age=60",
+    },
+  });
+}
+
+function noStoreJson(data, status = 200) {
+  return Response.json(data, {
+    status,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Cache-Control": "no-store",
+    },
+  });
+}
+
+function corsResponse() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Stripe-Signature",
+      "Access-Control-Max-Age": "86400",
     },
   });
 }
@@ -363,12 +386,143 @@ async function refresh(env) {
   return { previousRun, nextRun: { id: nextRun.id, status: nextRun.status } };
 }
 
+function normalizeEmail(email = "") {
+  return String(email).trim().toLowerCase();
+}
+
+function parseStripeSignature(signatureHeader = "") {
+  return signatureHeader.split(",").reduce(
+    (acc, part) => {
+      const [key, value] = part.split("=");
+      if (key === "t") acc.timestamp = value;
+      if (key === "v1") acc.signatures.push(value);
+      return acc;
+    },
+    { timestamp: "", signatures: [] },
+  );
+}
+
+function bytesToHex(bytes) {
+  return [...new Uint8Array(bytes)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function timingSafeEqual(a, b) {
+  if (a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let index = 0; index < a.length; index += 1) {
+    mismatch |= a.charCodeAt(index) ^ b.charCodeAt(index);
+  }
+  return mismatch === 0;
+}
+
+async function computeStripeSignature(secret, signedPayload) {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(signedPayload));
+  return bytesToHex(signature);
+}
+
+async function verifyStripeSignature(rawBody, signatureHeader, endpointSecret) {
+  if (!signatureHeader) return false;
+  if (!endpointSecret) throw new Error("Missing STRIPE_WEBHOOK_SECRET");
+
+  const parsed = parseStripeSignature(signatureHeader);
+  if (!parsed.timestamp || parsed.signatures.length === 0) return false;
+
+  const timestamp = Number(parsed.timestamp);
+  if (!Number.isFinite(timestamp)) return false;
+
+  const age = Math.abs(Math.floor(Date.now() / 1000) - timestamp);
+  if (age > STRIPE_SIGNATURE_TOLERANCE_SECONDS) return false;
+
+  const expectedSignature = await computeStripeSignature(endpointSecret, `${parsed.timestamp}.${rawBody}`);
+  return parsed.signatures.some((signature) => timingSafeEqual(signature, expectedSignature));
+}
+
+function entitlementFromCheckoutSession(session) {
+  const email = normalizeEmail(session.customer_details?.email || session.customer_email);
+  const reference = session.client_reference_id || "";
+  const productId = reference.match(/^product_(\d+)_/)?.[1] || "";
+
+  return {
+    active: Boolean(email || reference),
+    email,
+    reference,
+    productId,
+    stripeSessionId: session.id,
+    stripeCustomerId: session.customer || "",
+    stripeSubscriptionId: session.subscription || "",
+    mode: session.mode || "",
+    paymentStatus: session.payment_status || "",
+    amountTotal: session.amount_total || 0,
+    currency: session.currency || "",
+    createdAt: new Date().toISOString(),
+  };
+}
+
+async function storeEntitlement(env, event) {
+  if (event.type !== "checkout.session.completed") {
+    return { ignored: true, type: event.type };
+  }
+
+  const eventKey = `stripe:event:${event.id}`;
+  const processed = await env.PRODUCT_CACHE.get(eventKey);
+  if (processed) return { duplicate: true, eventId: event.id };
+
+  const session = event.data?.object || {};
+  const entitlement = entitlementFromCheckoutSession(session);
+  if (!entitlement.active) {
+    return { stored: false, reason: "missing-email-and-reference" };
+  }
+
+  const value = JSON.stringify(entitlement);
+  const writes = [env.PRODUCT_CACHE.put(eventKey, value)];
+  if (entitlement.email) writes.push(env.PRODUCT_CACHE.put(`entitlement:email:${entitlement.email}`, value));
+  if (entitlement.reference) writes.push(env.PRODUCT_CACHE.put(`entitlement:ref:${entitlement.reference}`, value));
+
+  await Promise.all(writes);
+  return { stored: true, email: entitlement.email, reference: entitlement.reference };
+}
+
+async function handleStripeWebhook(request, env) {
+  const rawBody = await request.text();
+  const signature = request.headers.get("Stripe-Signature") || "";
+  const isValid = await verifyStripeSignature(rawBody, signature, env.STRIPE_WEBHOOK_SECRET);
+  if (!isValid) return noStoreJson({ error: "Invalid Stripe signature" }, 400);
+
+  const event = JSON.parse(rawBody);
+  const result = await storeEntitlement(env, event);
+  return noStoreJson({ received: true, ...result });
+}
+
+async function getEntitlement(request, env) {
+  const url = new URL(request.url);
+  const reference = url.searchParams.get("reference") || "";
+  const email = normalizeEmail(url.searchParams.get("email") || "");
+  const key = reference ? `entitlement:ref:${reference}` : email ? `entitlement:email:${email}` : "";
+
+  if (!key) return noStoreJson({ active: false, error: "Missing reference or email" }, 400);
+
+  const entitlement = await env.PRODUCT_CACHE.get(key, "json");
+  if (!entitlement) return noStoreJson({ active: false });
+
+  return noStoreJson({ active: true, entitlement });
+}
+
 const worker = {
   async scheduled(_event, env, ctx) {
     ctx.waitUntil(refresh(env));
   },
 
   async fetch(request, env) {
+    if (request.method === "OPTIONS") return corsResponse();
+
     const url = new URL(request.url);
 
     if (url.pathname === "/api/health") {
@@ -390,6 +544,15 @@ const worker = {
           "Cache-Control": "public, max-age=60",
         },
       });
+    }
+
+    if (url.pathname === "/api/stripe/webhook") {
+      if (request.method !== "POST") return noStoreJson({ error: "Method not allowed" }, 405);
+      return handleStripeWebhook(request, env);
+    }
+
+    if (url.pathname === "/api/entitlement") {
+      return getEntitlement(request, env);
     }
 
     return json({ error: "Not found" }, 404);

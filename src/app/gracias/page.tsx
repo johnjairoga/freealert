@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { products } from "@/data/products";
+
+const RADAR_API_URL = process.env.NEXT_PUBLIC_PILLALO_RADAR_API_URL || "";
 
 type CheckoutIntent =
   | {
@@ -39,6 +41,7 @@ function readIntent() {
 
 export default function GraciasPage() {
   const [intent] = useState<CheckoutIntent | null>(() => readIntent());
+  const [paymentStatus, setPaymentStatus] = useState<"idle" | "checking" | "confirmed" | "pending">("idle");
 
   const selectedProduct = useMemo(() => {
     if (intent?.kind !== "product") return products[0];
@@ -53,6 +56,33 @@ export default function GraciasPage() {
       source: intent.source,
       sourceUrl: intent.sourceUrl,
       isReal: true,
+    };
+  }, [intent]);
+
+  useEffect(() => {
+    if (!RADAR_API_URL || !intent?.checkoutReference) return;
+
+    let isCancelled = false;
+
+    async function checkEntitlement() {
+      setPaymentStatus("checking");
+
+      try {
+        const response = await fetch(
+          `${RADAR_API_URL.replace(/\/$/, "")}/api/entitlement?reference=${encodeURIComponent(intent?.checkoutReference || "")}`,
+          { cache: "no-store" },
+        );
+        const payload = (await response.json()) as { active?: boolean };
+        if (!isCancelled) setPaymentStatus(payload.active ? "confirmed" : "pending");
+      } catch {
+        if (!isCancelled) setPaymentStatus("pending");
+      }
+    }
+
+    checkEntitlement();
+
+    return () => {
+      isCancelled = true;
     };
   }, [intent]);
 
@@ -81,6 +111,15 @@ export default function GraciasPage() {
           {intent?.email && (
             <p className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-900 ring-1 ring-emerald-200">
               Acceso asociado a {intent.email}
+            </p>
+          )}
+          {paymentStatus !== "idle" && (
+            <p className={`mt-3 rounded-xl px-3 py-2 text-xs font-bold ring-1 ${
+              paymentStatus === "confirmed"
+                ? "bg-emerald-50 text-emerald-900 ring-emerald-200"
+                : "bg-amber-50 text-amber-900 ring-amber-200"
+            }`}>
+              {paymentStatus === "confirmed" ? "Pago confirmado." : "Confirmando pago con Stripe."}
             </p>
           )}
 
