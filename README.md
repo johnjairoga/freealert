@@ -1,4 +1,6 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Píllalo
+
+Radar de productos gratis reales cerca de Madrid.
 
 ## Getting Started
 
@@ -16,7 +18,64 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Product feeds
+
+The app reads products in this order:
+
+1. `src/data/marketplace-products.json` when Apify/Facebook Marketplace products are available.
+2. `src/data/scraped-products.json` from Nolotiro.
+3. Local fallback products.
+
+### Nolotiro scrape
+
+```bash
+npm run scrape:nolotiro
+```
+
+### Marketplace validation through Apify
+
+Create an Apify task for Facebook Marketplace with Madrid search URLs:
+
+```txt
+https://www.facebook.com/marketplace/madrid/search?query=gratis&minPrice=0&maxPrice=0
+https://www.facebook.com/marketplace/madrid/search?query=regalo&minPrice=0&maxPrice=0
+```
+
+Then run:
+
+```bash
+APIFY_TOKEN=... APIFY_TASK_ID=... npm run scrape:marketplace
+```
+
+This writes `src/data/marketplace-products.json`. Add `-- --apply` to replace the app feed in `src/data/scraped-products.json`.
+
+The Marketplace filter rejects listings when the title says free but the description contains paid signals like price, sale, payment, Bizum, transfer, negotiable, or reservation language.
+
+## Cloudflare Worker radar
+
+The production radar lives in `workers/marketplace-radar`. It:
+
+- runs every 20 minutes with a Cron Trigger,
+- launches the configured Apify task,
+- ingests the previous finished run,
+- filters real-free products,
+- stores the latest approved feed in Workers KV,
+- exposes `GET /api/products`.
+
+Required secrets/config:
+
+```bash
+wrangler kv namespace create PRODUCT_CACHE
+wrangler secret put APIFY_TOKEN --config workers/marketplace-radar/wrangler.toml
+wrangler secret put APIFY_TASK_ID --config workers/marketplace-radar/wrangler.toml
+wrangler secret put WORKER_SECRET --config workers/marketplace-radar/wrangler.toml
+```
+
+Local Worker:
+
+```bash
+npm run worker:dev
+```
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 

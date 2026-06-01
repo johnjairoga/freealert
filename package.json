@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "scrape:nolotiro": "node scripts/scrape-nolotiro.mjs"
+    "scrape:nolotiro": "node scripts/scrape-nolotiro.mjs",
+    "scrape:marketplace": "node scripts/scrape-marketplace-apify.mjs",
+    "worker:dev": "npx wrangler dev workers/marketplace-radar/src/index.mjs --config workers/marketplace-radar/wrangler.toml"
   },
   "dependencies": {
     "cheerio": "^1.2.0",

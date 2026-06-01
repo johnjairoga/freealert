@@ -1,4 +1,5 @@
 import scrapedProducts from "./scraped-products.json";
+import marketplaceProducts from "./marketplace-products.json";
 
 export type BadgeType = 'new' | 'hot' | 'urgent' | 'available' | 'time';
 export type ProductQuality = "high" | "medium" | "low";
@@ -238,13 +239,16 @@ const fallbackProducts: Product[] = [
   },
 ];
 
-const realProducts = scrapedProducts.products as Product[];
+const marketplaceRealProducts = marketplaceProducts.products as Product[];
+const scrapedRealProducts = scrapedProducts.products as Product[];
+const activeFeed = marketplaceRealProducts.length > 0 ? marketplaceProducts : scrapedProducts;
+const realProducts = marketplaceRealProducts.length > 0 ? marketplaceRealProducts : scrapedRealProducts;
 
 export const products: Product[] = realProducts.length > 0 ? realProducts : fallbackProducts;
 export const productDataMeta = {
-  source: scrapedProducts.source,
-  sourceUrl: scrapedProducts.sourceUrl,
-  generatedAt: scrapedProducts.generatedAt,
-  count: scrapedProducts.count,
+  source: activeFeed.source,
+  sourceUrl: activeFeed.sourceUrl,
+  generatedAt: activeFeed.generatedAt,
+  count: activeFeed.count,
   isLive: realProducts.length > 0,
 };

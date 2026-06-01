@@ -180,7 +180,7 @@ export default function Modal({ isOpen, onClose, product }: ModalProps) {
               rel="noopener noreferrer"
               className="mt-4 block text-center rounded-xl bg-[#00C978] py-3.5 text-sm font-extrabold text-[#07110C] hover:bg-[#00B86F] transition-colors shadow-lg"
             >
-              Obtener datos para reclamarlo →
+              Reclamarlo →
             </a>
 
             <p className="mt-3 text-center text-xs text-slate-500">

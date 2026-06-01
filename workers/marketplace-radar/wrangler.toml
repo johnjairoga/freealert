@@ -1,0 +1,11 @@
+name = "pillalo-marketplace-radar"
+main = "src/index.mjs"
+compatibility_date = "2026-06-01"
+
+[triggers]
+crons = ["*/20 * * * *"]
+
+[[kv_namespaces]]
+binding = "PRODUCT_CACHE"
+id = "replace-with-production-kv-id"
+preview_id = "replace-with-preview-kv-id"
