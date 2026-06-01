@@ -65,7 +65,12 @@ Stripe Payment Links must redirect successful payments to:
 https://<your-domain>/gracias
 ```
 
-Before sending the user to Stripe, the app stores the selected product in `localStorage`. The `/gracias` page uses that intent to show the product, the original listing URL, and the next action to claim it.
+Before sending the user to Stripe, the app asks for an email and stores the selected product in `localStorage`. The Stripe Payment Link receives:
+
+- `prefilled_email`
+- `client_reference_id`
+
+The `/gracias` page uses the local intent to show the product, the original listing URL, the email associated with the access, and the next action to claim it.
 
 This is the minimum launch flow. A hardened version should add Stripe webhooks, customer identity, and server-side entitlement checks.
 

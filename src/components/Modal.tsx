@@ -38,9 +38,13 @@ const benefits = [
   "Cancela cuando quieras, sin permanencia",
 ];
 
+const CHECKOUT_URL = "https://buy.stripe.com/bJeaEZ0KcfCx6ju25tbfO0g";
+
 export default function Modal({ isOpen, onClose, product }: ModalProps) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [email, setEmail] = useState("");
+  const [emailTouched, setEmailTouched] = useState(false);
   const questionStep = step > 0 && step <= onboardingSteps.length;
   const resultStep = onboardingSteps.length + 1;
   const paywallStep = onboardingSteps.length + 2;
@@ -48,6 +52,9 @@ export default function Modal({ isOpen, onClose, product }: ModalProps) {
   const selectedAnswer = currentStep ? answers[currentStep.id] : "";
   const canContinue = !currentStep || Boolean(selectedAnswer);
   const previewProducts = products.slice(0, 4);
+  const normalizedEmail = email.trim().toLowerCase();
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail);
+  const showEmailError = emailTouched && !isEmailValid;
 
   useEffect(() => {
     if (isOpen) {
@@ -89,10 +96,18 @@ export default function Modal({ isOpen, onClose, product }: ModalProps) {
     setStep((current) => Math.max(current - 1, 0));
   };
 
-  const rememberCheckoutIntent = () => {
+  const buildCheckout = () => {
+    const prefix = product ? `product_${product.id}` : "radar";
+    const checkoutReference = `${prefix}_${Date.now().toString(36)}`;
+    const checkoutUrl = new URL(CHECKOUT_URL);
+    checkoutUrl.searchParams.set("prefilled_email", normalizedEmail);
+    checkoutUrl.searchParams.set("client_reference_id", checkoutReference);
+
     const intent = product
       ? {
           kind: "product",
+          email: normalizedEmail,
+          checkoutReference,
           productId: product.id,
           title: product.title,
           image: product.image,
@@ -104,10 +119,20 @@ export default function Modal({ isOpen, onClose, product }: ModalProps) {
         }
       : {
           kind: "radar",
+          email: normalizedEmail,
+          checkoutReference,
           savedAt: new Date().toISOString(),
         };
 
     window.localStorage.setItem("pillalo:checkout-intent", JSON.stringify(intent));
+    return checkoutUrl.toString();
+  };
+
+  const handleCheckout = () => {
+    setEmailTouched(true);
+    if (!isEmailValid) return;
+
+    window.location.href = buildCheckout();
   };
 
   if (!isOpen) return null;
@@ -195,15 +220,39 @@ export default function Modal({ isOpen, onClose, product }: ModalProps) {
               <p className="mt-1 text-xs text-slate-500">Este producto + alertas similares · Cancela cuando quieras</p>
             </div>
 
-            <a
-              href="https://buy.stripe.com/bJeaEZ0KcfCx6ju25tbfO0g"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={rememberCheckoutIntent}
-              className="mt-4 block text-center rounded-xl bg-[#00C978] py-3.5 text-sm font-extrabold text-[#07110C] hover:bg-[#00B86F] transition-colors shadow-lg"
+            <div className="mt-5">
+              <label htmlFor="checkout-email-product" className="text-xs font-black uppercase tracking-wide text-slate-500">
+                Email para tu acceso
+              </label>
+              <input
+                id="checkout-email-product"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                value={email}
+                onBlur={() => setEmailTouched(true)}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="tu@email.com"
+                className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold text-slate-950 outline-none transition-colors ${
+                  showEmailError
+                    ? "border-red-300 bg-red-50"
+                    : "border-slate-200 bg-white focus:border-[#00C978] focus:bg-emerald-50/30"
+                }`}
+              />
+              {showEmailError && (
+                <p className="mt-1.5 text-xs font-semibold text-red-600">
+                  Escribe un email válido para enviarte el acceso.
+                </p>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleCheckout}
+              className="mt-4 block w-full rounded-xl bg-[#00C978] py-3.5 text-center text-sm font-extrabold text-[#07110C] shadow-lg transition-colors hover:bg-[#00B86F]"
             >
               Reclamarlo →
-            </a>
+            </button>
 
             <p className="mt-3 text-center text-xs text-slate-500">
               Pago seguro con Stripe · Sin permanencia
@@ -483,15 +532,39 @@ export default function Modal({ isOpen, onClose, product }: ModalProps) {
               <p className="mt-1 text-xs text-slate-500">Cancela cuando quieras · Sin permanencia</p>
             </div>
 
-            <a
-              href="https://buy.stripe.com/bJeaEZ0KcfCx6ju25tbfO0g"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={rememberCheckoutIntent}
-              className="mt-4 block text-center rounded-xl bg-[#00C978] py-3.5 text-sm font-extrabold text-[#07110C] hover:bg-[#00B86F] transition-colors shadow-lg"
+            <div className="mt-5">
+              <label htmlFor="checkout-email-radar" className="text-xs font-black uppercase tracking-wide text-slate-500">
+                Email para activar tu radar
+              </label>
+              <input
+                id="checkout-email-radar"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                value={email}
+                onBlur={() => setEmailTouched(true)}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="tu@email.com"
+                className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm font-bold text-slate-950 outline-none transition-colors ${
+                  showEmailError
+                    ? "border-red-300 bg-red-50"
+                    : "border-slate-200 bg-white focus:border-[#00C978] focus:bg-emerald-50/30"
+                }`}
+              />
+              {showEmailError && (
+                <p className="mt-1.5 text-xs font-semibold text-red-600">
+                  Escribe un email válido para enviarte el acceso.
+                </p>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleCheckout}
+              className="mt-4 block w-full rounded-xl bg-[#00C978] py-3.5 text-center text-sm font-extrabold text-[#07110C] shadow-lg transition-colors hover:bg-[#00B86F]"
             >
               Activar alertas por 4,99€/mes →
-            </a>
+            </button>
 
             <div className="mt-4 flex items-center justify-center gap-3 text-xs text-slate-500 flex-wrap">
               <span>💳 Pago 100% seguro (Stripe)</span>

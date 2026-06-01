@@ -8,6 +8,8 @@ import { products } from "@/data/products";
 type CheckoutIntent =
   | {
       kind: "product";
+      email?: string;
+      checkoutReference?: string;
       productId: number;
       title: string;
       image: string;
@@ -19,6 +21,8 @@ type CheckoutIntent =
     }
   | {
       kind: "radar";
+      email?: string;
+      checkoutReference?: string;
       savedAt: string;
     };
 
@@ -74,6 +78,11 @@ export default function GraciasPage() {
           <p className="mt-3 text-sm leading-relaxed text-slate-600">
             Abre la publicación original, confirma que sigue disponible y escribe al anunciante para coordinar la recogida. Los artículos gratis pueden desaparecer rápido.
           </p>
+          {intent?.email && (
+            <p className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-900 ring-1 ring-emerald-200">
+              Acceso asociado a {intent.email}
+            </p>
+          )}
 
           <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white">
             <div className="relative aspect-[4/3] bg-slate-100">
@@ -118,6 +127,7 @@ export default function GraciasPage() {
             {[
               "Mensaje sugerido: Hola, me interesa. ¿Sigue disponible para recoger hoy?",
               "Si no responde, vuelve al radar y reclama otro parecido.",
+              "Guarda este email: si hay problema con el acceso, usa el mismo correo del pago.",
               "No pagues nada fuera de la app: estos hallazgos deben ser gratis.",
             ].map((item) => (
               <div key={item} className="rounded-xl bg-slate-50 p-3 text-sm font-semibold text-slate-700">
