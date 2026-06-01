@@ -10,6 +10,8 @@ const MADRID_MARKETPLACE_URLS = [
 ];
 
 const paidSignals = [
+  /\benv[ií]o\s+gratis\b/i,
+  /\bfree\s+shipping\b/i,
   /\bvendo\b/i,
   /\bventa\b/i,
   /\bprecio\b/i,
@@ -39,6 +41,38 @@ const nonProductSignals = [
   /\bservicio\b/i,
   /\bclases\b/i,
   /\bcurso\b/i,
+  /\bcursos\b/i,
+  /\bf[oó]rmate\b/i,
+  /\bformaci[oó]n\b/i,
+  /\bonline\b/i,
+  /\bbig\s+data\b/i,
+  /\biot\b/i,
+  /\bmary\s+kay\b/i,
+  /\blimpieza\s+facial\b/i,
+  /\bdesayuno\b/i,
+  /\bpersonalizad[oa]s?\b/i,
+  /\bflores?\s+amarillas?\b/i,
+  /\bdetalles?\b/i,
+  /\bgraduaci[oó]n\b/i,
+  /\bgarduacion\b/i,
+  /\bd[ií]a\s+de\s+la\s+madre\b/i,
+  /\bd[ií]a\s+del\s+padre\b/i,
+  /\bsan\s+valent[ií]n\b/i,
+  /\bbares?\b/i,
+  /\brestaurantes?\b/i,
+  /\bemplead[oa]s?\b/i,
+  /\brecojo\b/i,
+  /\bchatarra\b/i,
+  /\bapp\s+de\s+citas\b/i,
+  /\bbeta\s+madrid\b/i,
+  /\bmodelo\s+corte\b/i,
+  /\bcorte\s+gratis\b/i,
+  /\bmundial\s+gratis\b/i,
+  /\bera\s+gratis\b/i,
+  /\bpatitos?\b/i,
+  /\bcorydoras?\b/i,
+  /\bcomida\s+perro\b/i,
+  /\bpienso\b/i,
   /\bevento\b/i,
   /\brutas?\b/i,
   /\balquiler\b/i,
@@ -114,27 +148,56 @@ function extractImage(item) {
     item.photos?.[0],
     item.images?.[0],
     item.media?.[0]?.url,
+    item.primary_listing_photo?.photo_image_url,
   );
 }
 
 function extractUrl(item) {
-  return firstString(item.url, item.href, item.link, item.listingUrl, item.marketplaceUrl, item.shareUrl);
+  return firstString(item.url, item.href, item.link, item.listingUrl, item.listingUrl, item.marketplaceUrl, item.shareUrl);
 }
 
 function extractLocation(item) {
   const location = item.location;
   if (typeof location === "string") return normalizeText(location);
-  return firstString(location?.name, location?.city, item.city, item.region, "Madrid");
+  return firstString(location?.name, location?.city, location?.reverse_geocode?.city_page?.display_name, location?.reverse_geocode?.city, item.city, item.region, "Madrid");
 }
 
 function extractPriceText(item) {
   if (item.price === 0 || item.listingPrice === 0) return "0";
-  return firstString(item.price, item.priceText, item.listingPrice, item.formattedPrice);
+  return firstString(
+    item.price,
+    item.priceText,
+    item.listingPrice,
+    item.formattedPrice,
+    item.listing_price?.formatted_amount,
+    item.listing_price?.amount,
+    item.listing_price?.amount_with_offset_in_currency,
+  );
+}
+
+function isMadridRegion(item) {
+  const state = item.location?.reverse_geocode?.state;
+  if (state) return state === "MD";
+
+  const location = extractLocation(item).toLowerCase();
+  return /\bmadrid\b/.test(location);
+}
+
+function isWeakFreeTitle(title) {
+  const normalized = title
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return ["gratis", "regalo", "se regala", "100 gratis"].includes(normalized);
 }
 
 function isZeroPrice(priceText) {
   const value = normalizeText(priceText).toLowerCase();
-  return !value || value === "0" || value === "0€" || value === "gratis" || value.includes("free");
+  return !value || value === "0" || value === "0.00" || value === "$0" || value === "€0" || value === "0€" || value === "gratis" || value.includes("free");
 }
 
 function rejectReason({ title, description, priceText, image, sourceUrl }) {
@@ -145,8 +208,10 @@ function rejectReason({ title, description, priceText, image, sourceUrl }) {
   if (!titleText) return "missing-title";
   if (!sourceUrl) return "missing-source-url";
   if (!image) return "missing-image";
+  if (isWeakFreeTitle(titleText)) return "weak-free-title";
   if (!isZeroPrice(priceText)) return "non-zero-price";
   if (!freeSignals.some((signal) => signal.test(combined))) return "no-free-signal";
+  if (paidSignals.some((signal) => signal.test(titleText))) return "paid-signal-in-title";
   if (paidSignals.some((signal) => signal.test(descriptionText))) return "paid-signal-in-description";
   if (nonProductSignals.some((signal) => signal.test(combined))) return "not-a-physical-product";
   return "";
@@ -169,7 +234,14 @@ function classifyBadge(quality, title, description) {
 }
 
 function normalizeItem(item, index) {
-  const title = normalizeText(firstString(item.title, item.name, item.marketplaceListingTitle, item.listingTitle));
+  if (item.is_hidden || item.is_sold || item.is_pending || item.is_live === false) {
+    return { rejected: true, reason: "inactive-listing" };
+  }
+  if (!isMadridRegion(item)) {
+    return { rejected: true, reason: "outside-madrid" };
+  }
+
+  const title = normalizeText(firstString(item.title, item.name, item.marketplaceListingTitle, item.marketplace_listing_title, item.listingTitle));
   const description = normalizeText(firstString(item.description, item.text, item.details, item.body));
   const sourceUrl = extractUrl(item);
   const image = extractImage(item);
