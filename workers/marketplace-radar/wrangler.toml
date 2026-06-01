@@ -3,9 +3,9 @@ main = "src/index.mjs"
 compatibility_date = "2026-06-01"
 
 [triggers]
-crons = ["*/20 * * * *"]
+crons = ["0 6 * * *"]
 
 [[kv_namespaces]]
 binding = "PRODUCT_CACHE"
-id = "replace-with-production-kv-id"
-preview_id = "replace-with-preview-kv-id"
+id = "9cd365d6f30e42fd808130ddeae1a81c"
+preview_id = "9cd365d6f30e42fd808130ddeae1a81c"
