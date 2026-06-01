@@ -5,6 +5,7 @@ const MARKETPLACE_URLS = [
 
 const CACHE_KEY = "marketplace:madrid:latest";
 const LAST_RUN_KEY = "apify:last-run-id";
+const DEFAULT_ACTOR_ID = "apify/facebook-marketplace-scraper";
 
 const paidSignals = [
   /\bvendo\b/i,
@@ -235,12 +236,27 @@ async function apifyRequest(path, env, init) {
   return response.json();
 }
 
+function actorPathId(actorId) {
+  return actorId.replace("/", "~");
+}
+
+function apifyInput(env) {
+  if (env.APIFY_INPUT) return JSON.parse(env.APIFY_INPUT);
+  if (env.APIFY_TASK_INPUT) return JSON.parse(env.APIFY_TASK_INPUT);
+  return {
+    startUrls: MARKETPLACE_URLS.map((url) => ({ url })),
+    maxItems: Number(env.APIFY_MAX_ITEMS || 80),
+  };
+}
+
 async function startApifyRun(env) {
-  const body = env.APIFY_TASK_INPUT || undefined;
-  const payload = await apifyRequest(`actor-tasks/${encodeURIComponent(env.APIFY_TASK_ID)}/runs`, env, {
+  const path = env.APIFY_TASK_ID
+    ? `actor-tasks/${encodeURIComponent(env.APIFY_TASK_ID)}/runs`
+    : `acts/${encodeURIComponent(actorPathId(env.APIFY_ACTOR_ID || DEFAULT_ACTOR_ID))}/runs`;
+  const payload = await apifyRequest(path, env, {
     method: "POST",
-    headers: body ? { "Content-Type": "application/json" } : undefined,
-    body,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(apifyInput(env)),
   });
   await env.PRODUCT_CACHE.put(LAST_RUN_KEY, payload.data.id);
   return payload.data;
@@ -262,8 +278,8 @@ async function ingestFinishedRun(env) {
 }
 
 async function refresh(env) {
-  if (!env.APIFY_TOKEN || !env.APIFY_TASK_ID) {
-    throw new Error("Missing APIFY_TOKEN or APIFY_TASK_ID");
+  if (!env.APIFY_TOKEN) {
+    throw new Error("Missing APIFY_TOKEN");
   }
 
   const previousRun = await ingestFinishedRun(env);

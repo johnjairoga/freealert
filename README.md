@@ -41,13 +41,19 @@ https://www.facebook.com/marketplace/madrid/search?query=gratis&minPrice=0&maxPr
 https://www.facebook.com/marketplace/madrid/search?query=regalo&minPrice=0&maxPrice=0
 ```
 
-Then run:
+Then run the actor directly:
+
+```bash
+APIFY_TOKEN=... APIFY_ACTOR_ID=apify/facebook-marketplace-scraper npm run scrape:marketplace
+```
+
+You can also use a saved Apify task:
 
 ```bash
 APIFY_TOKEN=... APIFY_TASK_ID=... npm run scrape:marketplace
 ```
 
-This writes `src/data/marketplace-products.json`. Add `-- --apply` to replace the app feed in `src/data/scraped-products.json`.
+This writes `src/data/marketplace-products.json`. Add `-- --apply` to replace the app feed in `src/data/scraped-products.json`. Override the actor input with `APIFY_INPUT='{"startUrls":[{"url":"..."}],"maxItems":80}'`.
 
 The Marketplace filter rejects listings when the title says free but the description contains paid signals like price, sale, payment, Bizum, transfer, negotiable, or reservation language.
 
@@ -67,9 +73,18 @@ Required secrets/config:
 ```bash
 wrangler kv namespace create PRODUCT_CACHE
 wrangler secret put APIFY_TOKEN --config workers/marketplace-radar/wrangler.toml
-wrangler secret put APIFY_TASK_ID --config workers/marketplace-radar/wrangler.toml
 wrangler secret put WORKER_SECRET --config workers/marketplace-radar/wrangler.toml
 ```
+
+Optional:
+
+```bash
+wrangler secret put APIFY_TASK_ID --config workers/marketplace-radar/wrangler.toml
+wrangler secret put APIFY_ACTOR_ID --config workers/marketplace-radar/wrangler.toml
+wrangler secret put APIFY_INPUT --config workers/marketplace-radar/wrangler.toml
+```
+
+When no `APIFY_TASK_ID` is set, the Worker runs `apify/facebook-marketplace-scraper` directly.
 
 Local Worker:
 

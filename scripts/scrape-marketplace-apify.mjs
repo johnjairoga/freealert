@@ -3,6 +3,7 @@ import path from "node:path";
 
 const OUTPUT_PATH = path.join(process.cwd(), "src/data/marketplace-products.json");
 const APP_FEED_PATH = path.join(process.cwd(), "src/data/scraped-products.json");
+const DEFAULT_ACTOR_ID = "apify/facebook-marketplace-scraper";
 const MADRID_MARKETPLACE_URLS = [
   "https://www.facebook.com/marketplace/madrid/search?query=gratis&minPrice=0&maxPrice=0",
   "https://www.facebook.com/marketplace/madrid/search?query=regalo&minPrice=0&maxPrice=0",
@@ -242,21 +243,43 @@ function buildPayload(rawItems) {
   };
 }
 
-async function runApifyTask() {
+function actorPathId(actorId) {
+  return actorId.replace("/", "~");
+}
+
+function defaultActorInput() {
+  return {
+    startUrls: MADRID_MARKETPLACE_URLS.map((url) => ({ url })),
+    maxItems: Number(process.env.APIFY_MAX_ITEMS || 80),
+  };
+}
+
+function apifyInput() {
+  if (process.env.APIFY_INPUT) return JSON.parse(process.env.APIFY_INPUT);
+  if (process.env.APIFY_TASK_INPUT) return JSON.parse(process.env.APIFY_TASK_INPUT);
+  return defaultActorInput();
+}
+
+async function runApify() {
   const token = process.env.APIFY_TOKEN;
-  const taskId = process.env.APIFY_TASK_ID;
-  if (!token || !taskId) {
-    throw new Error("Missing APIFY_TOKEN or APIFY_TASK_ID. Configure a Facebook Marketplace Apify task first.");
+  if (!token) {
+    throw new Error("Missing APIFY_TOKEN. Use APIFY_ACTOR_ID for direct actor runs or APIFY_TASK_ID for a saved task.");
   }
 
-  const runResponse = await fetch(`https://api.apify.com/v2/actor-tasks/${encodeURIComponent(taskId)}/runs?token=${token}`, {
+  const taskId = process.env.APIFY_TASK_ID;
+  const actorId = process.env.APIFY_ACTOR_ID || DEFAULT_ACTOR_ID;
+  const path = taskId
+    ? `actor-tasks/${encodeURIComponent(taskId)}/runs`
+    : `acts/${encodeURIComponent(actorPathId(actorId))}/runs`;
+
+  const runResponse = await fetch(`https://api.apify.com/v2/${path}?token=${token}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: process.env.APIFY_TASK_INPUT ? process.env.APIFY_TASK_INPUT : undefined,
+    body: JSON.stringify(apifyInput()),
   });
 
   if (!runResponse.ok) {
-    throw new Error(`Apify task run failed: ${runResponse.status} ${await runResponse.text()}`);
+    throw new Error(`Apify run failed: ${runResponse.status} ${await runResponse.text()}`);
   }
 
   const runPayload = await runResponse.json();
@@ -295,7 +318,7 @@ async function readInput() {
   if (process.env.APIFY_DATASET_ID) {
     return fetchDataset(process.env.APIFY_DATASET_ID);
   }
-  return runApifyTask();
+  return runApify();
 }
 
 async function main() {
