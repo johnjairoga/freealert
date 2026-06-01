@@ -57,6 +57,18 @@ This writes `src/data/marketplace-products.json`. Add `-- --apply` to replace th
 
 The Marketplace filter rejects listings when the title says free but the description contains paid signals like price, sale, payment, Bizum, transfer, negotiable, or reservation language.
 
+## Stripe post-payment flow
+
+Stripe Payment Links must redirect successful payments to:
+
+```txt
+https://<your-domain>/gracias
+```
+
+Before sending the user to Stripe, the app stores the selected product in `localStorage`. The `/gracias` page uses that intent to show the product, the original listing URL, and the next action to claim it.
+
+This is the minimum launch flow. A hardened version should add Stripe webhooks, customer identity, and server-side entitlement checks.
+
 ## Cloudflare Worker radar
 
 The production radar lives in `workers/marketplace-radar`. It:

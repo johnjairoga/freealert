@@ -89,6 +89,27 @@ export default function Modal({ isOpen, onClose, product }: ModalProps) {
     setStep((current) => Math.max(current - 1, 0));
   };
 
+  const rememberCheckoutIntent = () => {
+    const intent = product
+      ? {
+          kind: "product",
+          productId: product.id,
+          title: product.title,
+          image: product.image,
+          location: product.location,
+          timeAgo: product.timeAgo,
+          source: product.source,
+          sourceUrl: product.sourceUrl,
+          savedAt: new Date().toISOString(),
+        }
+      : {
+          kind: "radar",
+          savedAt: new Date().toISOString(),
+        };
+
+    window.localStorage.setItem("pillalo:checkout-intent", JSON.stringify(intent));
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -178,6 +199,7 @@ export default function Modal({ isOpen, onClose, product }: ModalProps) {
               href="https://buy.stripe.com/bJeaEZ0KcfCx6ju25tbfO0g"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={rememberCheckoutIntent}
               className="mt-4 block text-center rounded-xl bg-[#00C978] py-3.5 text-sm font-extrabold text-[#07110C] hover:bg-[#00B86F] transition-colors shadow-lg"
             >
               Reclamarlo →
@@ -465,6 +487,7 @@ export default function Modal({ isOpen, onClose, product }: ModalProps) {
               href="https://buy.stripe.com/bJeaEZ0KcfCx6ju25tbfO0g"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={rememberCheckoutIntent}
               className="mt-4 block text-center rounded-xl bg-[#00C978] py-3.5 text-sm font-extrabold text-[#07110C] hover:bg-[#00B86F] transition-colors shadow-lg"
             >
               Activar alertas por 4,99€/mes →
